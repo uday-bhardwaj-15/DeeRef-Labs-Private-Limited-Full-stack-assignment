@@ -551,7 +551,8 @@ export async function POST(request: NextRequest) {
       console.error("Database save error:", error);
       // Try to clean up the uploaded blob if database save fails
       try {
-        await import("@vercel/blob").then(({ del }) => del(blob.url));
+        const { del } = await import("@vercel/blob");
+        await del(blob.url);
       } catch (cleanupError) {
         console.error("Cleanup error:", cleanupError);
       }
