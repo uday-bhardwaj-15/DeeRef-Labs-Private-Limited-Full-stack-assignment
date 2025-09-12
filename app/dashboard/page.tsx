@@ -641,6 +641,7 @@ export default function DashboardPage() {
   //     setUploading(false);
   //   }
   // };
+  // Replace your handleUpload function with this improved version that tries both methods
   const handleUpload = async () => {
     if (!file || !title.trim()) {
       toast({
@@ -665,30 +666,49 @@ export default function DashboardPage() {
     setUploading(true);
 
     try {
+      // Try FormData approach first
       const formData = new FormData();
       formData.append("file", file);
       formData.append("title", title.trim());
 
-      // Debug: Log the form data
-      console.log(
-        "Uploading file:",
-        file.name,
-        "Size:",
-        file.size,
-        "Type:",
-        file.type
-      );
-      console.log("Title:", title.trim());
+      console.log("Trying FormData upload...");
 
-      const response = await fetch("/api/pdf/upload", {
+      let response = await fetch("/api/pdf/upload", {
         method: "POST",
         credentials: "include",
         body: formData,
-        // Don't set Content-Type header - let the browser set it with boundary
       });
 
+      // If FormData fails, try Base64 approach
+      if (!response.ok && response.status === 400) {
+        console.log("FormData failed, trying Base64 approach...");
+
+        // Convert file to base64
+        const base64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = reader.result as string;
+            resolve(result.split(",")[1]); // Remove data:application/pdf;base64, prefix
+          };
+          reader.readAsDataURL(file);
+        });
+
+        response = await fetch("/api/pdf/upload", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            file: base64,
+            title: title.trim(),
+            fileName: file.name,
+            fileSize: file.size,
+          }),
+        });
+      }
+
       console.log("Upload response status:", response.status);
-      console.log("Upload response headers:", response.headers);
 
       const responseData = await response.json();
       console.log("Upload response data:", responseData);

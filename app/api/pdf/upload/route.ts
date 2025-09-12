@@ -425,7 +425,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import PDF from "@/models/PDF";
 import { verifyToken } from "@/lib/auth";
 import { v4 as uuidv4 } from "uuid";
-import { put } from "@vercel/blob";
+import { put, type PutBlobResult } from "@vercel/blob";
 
 // Route segment config for App Router
 export const maxDuration = 30;
@@ -445,46 +445,86 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
-    // Parse form data with error handling
-    let formData;
-    try {
-      formData = await request.formData();
-    } catch (error) {
-      console.error("FormData parsing error:", error);
-      return NextResponse.json(
-        {
-          error:
-            "Failed to parse form data. Please ensure you are uploading a valid file.",
-        },
-        { status: 400 }
-      );
+    // Try JSON approach first, then fallback to FormData
+    let file: File | null = null;
+    let title: string = "";
+    let buffer: Buffer;
+
+    const contentType = request.headers.get("content-type") || "";
+    console.log("Content-Type:", contentType);
+
+    if (contentType.includes("application/json")) {
+      // Handle JSON upload (base64)
+      const body = await request.json();
+      title = body.title;
+      const base64Data = body.file; // Expected to be base64 string
+      const fileName = body.fileName;
+      const fileSize = body.fileSize;
+
+      if (!base64Data || !title || !fileName) {
+        return NextResponse.json(
+          { error: "File data, title, and filename are required" },
+          { status: 400 }
+        );
+      }
+
+      // Convert base64 to buffer
+      buffer = Buffer.from(base64Data, "base64");
+
+      // Create a mock file object for validation
+      file = {
+        name: fileName,
+        size: fileSize,
+        type: "application/pdf",
+      } as File;
+    } else {
+      // Handle FormData upload
+      try {
+        const formData = await request.formData();
+        file = formData.get("file") as File;
+        title = formData.get("title") as string;
+
+        if (!file || !title) {
+          return NextResponse.json(
+            { error: "File and title are required" },
+            { status: 400 }
+          );
+        }
+
+        // Convert file to buffer
+        const bytes = await file.arrayBuffer();
+        buffer = Buffer.from(bytes);
+      } catch (formDataError) {
+        console.error("FormData parsing failed:", formDataError);
+        return NextResponse.json(
+          { error: "Failed to parse form data. Please try again." },
+          { status: 400 }
+        );
+      }
     }
 
-    const file = formData.get("file") as File;
-    const title = formData.get("title") as string;
-
-    if (!file || !title) {
+    if (!file || !title.trim()) {
       return NextResponse.json(
         { error: "File and title are required" },
         { status: 400 }
       );
     }
 
-    if (!file.type || file.type !== "application/pdf") {
+    if (file.type !== "application/pdf") {
       return NextResponse.json(
         { error: "Only PDF files are allowed" },
         { status: 400 }
       );
     }
 
-    if (file.size === 0) {
+    if (file.size === 0 || buffer.length === 0) {
       return NextResponse.json(
         { error: "File cannot be empty" },
         { status: 400 }
       );
     }
 
-    // Check file size limit (5MB for better Vercel compatibility)
+    // Check file size limit (5MB)
     if (file.size > 5 * 1024 * 1024) {
       return NextResponse.json(
         { error: "File size cannot exceed 5MB" },
@@ -496,21 +536,8 @@ export async function POST(request: NextRequest) {
     const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     const filename = `${uuid}-${sanitizedFileName}`;
 
-    // Convert file to buffer
-    let buffer;
-    try {
-      const bytes = await file.arrayBuffer();
-      buffer = Buffer.from(bytes);
-    } catch (error) {
-      console.error("File processing error:", error);
-      return NextResponse.json(
-        { error: "Failed to process file" },
-        { status: 400 }
-      );
-    }
-
     // Upload to Vercel Blob
-    let blob;
+    let blob: PutBlobResult;
     try {
       blob = await put(`pdfs/${filename}`, buffer, {
         access: "public",
