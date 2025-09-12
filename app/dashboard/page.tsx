@@ -594,11 +594,69 @@ export default function DashboardPage() {
     }
   };
 
+  // const handleUpload = async () => {
+  //   if (!file || !title.trim()) {
+  //     toast({
+  //       title: "Missing information",
+  //       description: "Please select a file and enter a title",
+  //       variant: "destructive",
+  //     });
+  //     return;
+  //   }
+
+  //   setUploading(true);
+
+  //   try {
+  //     const formData = new FormData();
+  //     formData.append("file", file);
+  //     formData.append("title", title.trim());
+
+  //     const response = await fetch("/api/pdf/upload", {
+  //       method: "POST",
+  //       credentials: "include",
+  //       body: formData,
+  //     });
+
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //       toast({
+  //         title: "Success",
+  //         description: "PDF uploaded successfully",
+  //       });
+  //       setShowUploadDialog(false);
+  //       setFile(null);
+  //       setTitle("");
+  //       loadPDFs();
+  //     } else {
+  //       const error = await response.json();
+  //       throw new Error(error.error);
+  //     }
+  //   } catch (error: any) {
+  //     toast({
+  //       title: "Upload failed",
+  //       description: error.message || "Failed to upload PDF",
+  //       variant: "destructive",
+  //     });
+  //   } finally {
+  //     setUploading(false);
+  //   }
+  // };
   const handleUpload = async () => {
     if (!file || !title.trim()) {
       toast({
         title: "Missing information",
         description: "Please select a file and enter a title",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Additional file validation
+    if (file.size > 5 * 1024 * 1024) {
+      // 5MB limit
+      toast({
+        title: "File too large",
+        description: "Please select a file smaller than 5MB",
         variant: "destructive",
       });
       return;
@@ -611,14 +669,31 @@ export default function DashboardPage() {
       formData.append("file", file);
       formData.append("title", title.trim());
 
+      // Debug: Log the form data
+      console.log(
+        "Uploading file:",
+        file.name,
+        "Size:",
+        file.size,
+        "Type:",
+        file.type
+      );
+      console.log("Title:", title.trim());
+
       const response = await fetch("/api/pdf/upload", {
         method: "POST",
         credentials: "include",
         body: formData,
+        // Don't set Content-Type header - let the browser set it with boundary
       });
 
+      console.log("Upload response status:", response.status);
+      console.log("Upload response headers:", response.headers);
+
+      const responseData = await response.json();
+      console.log("Upload response data:", responseData);
+
       if (response.ok) {
-        const data = await response.json();
         toast({
           title: "Success",
           description: "PDF uploaded successfully",
@@ -626,12 +701,17 @@ export default function DashboardPage() {
         setShowUploadDialog(false);
         setFile(null);
         setTitle("");
-        loadPDFs();
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+        await loadPDFs();
       } else {
-        const error = await response.json();
-        throw new Error(error.error);
+        throw new Error(
+          responseData.error || `Upload failed with status ${response.status}`
+        );
       }
     } catch (error: any) {
+      console.error("Upload error:", error);
       toast({
         title: "Upload failed",
         description: error.message || "Failed to upload PDF",
@@ -641,7 +721,6 @@ export default function DashboardPage() {
       setUploading(false);
     }
   };
-
   const handleEdit = async () => {
     if (!selectedPdf || !title.trim()) return;
 
