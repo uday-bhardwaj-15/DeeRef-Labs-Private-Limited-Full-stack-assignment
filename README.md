@@ -335,5 +335,5 @@ For support or questions:
 ---
 
 Built with ❤️ using Next.js, MongoDB, and modern web technologies.
-👨‍💻 Made by [Uday Bhardwaj](https://github.com/udaybhardwaj-15)  
+👨‍💻 Made by [Uday Bhardwaj](https://github.com/uday-bhardwaj-15)  
 If you try it out, I’d love to hear your feedback!
