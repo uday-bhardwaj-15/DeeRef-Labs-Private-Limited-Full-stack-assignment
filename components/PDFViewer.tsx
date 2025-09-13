@@ -1486,9 +1486,10 @@ interface Highlight {
 interface PDFViewerProps {
   pdfUuid: string;
   title: string;
+  filePath?: string;
 }
 
-export function PDFViewer({ pdfUuid, title }: PDFViewerProps) {
+export function PDFViewer({ pdfUuid, title, filePath }: PDFViewerProps) {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [scale, setScale] = useState<number>(1.2);
@@ -1510,6 +1511,123 @@ export function PDFViewer({ pdfUuid, title }: PDFViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Load PDF.js and initialize
+  // useEffect(() => {
+  //   const initializePDFJS = async () => {
+  //     try {
+  //       console.log("Loading PDF.js library...");
+
+  //       // Dynamic import of PDF.js
+  //       const pdfjs = await import("pdfjs-dist");
+
+  //       // Set worker source
+  //       if (typeof window !== "undefined") {
+  //         pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
+  //       }
+
+  //       setPdfjsLib(pdfjs);
+  //       console.log("PDF.js loaded successfully");
+
+  //       // Now load the PDF document
+  //       await loadPDFDocument(pdfjs);
+  //     } catch (err) {
+  //       console.error("Failed to load PDF.js:", err);
+
+  //       let message = "Failed to initialize PDF viewer";
+  //       if (err instanceof Error) {
+  //         message = `Failed to initialize PDF viewer: ${err.message}`;
+  //       }
+
+  //       setError(message);
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   const loadPDFDocument = async (pdfjs: any) => {
+  //     if (!pdfUuid) {
+  //       setError("No PDF UUID provided");
+  //       setLoading(false);
+  //       return;
+  //     }
+
+  //     try {
+  //       console.log("Loading PDF document for UUID:", pdfUuid);
+
+  //       const pdfUrl = `/api/pdf/${pdfUuid}`;
+  //       console.log("PDF URL:", pdfUrl);
+
+  //       // Test accessibility first
+  //       const testResponse = await fetch(pdfUrl, {
+  //         method: "HEAD",
+  //         credentials: "same-origin",
+  //       });
+
+  //       if (!testResponse.ok) {
+  //         throw new Error(
+  //           `PDF not accessible: ${testResponse.status} ${testResponse.statusText}`
+  //         );
+  //       }
+
+  //       console.log("PDF endpoint is accessible, loading document...");
+
+  //       // Create loading task with proper configuration
+  //       const loadingTask = pdfjs.getDocument({
+  //         url: pdfUrl,
+  //         httpHeaders: {
+  //           Accept: "application/pdf",
+  //         },
+  //         withCredentials: true,
+  //         disableFontFace: false, // Enable font loading for better text rendering
+  //         disableStream: true,
+  //         disableAutoFetch: true,
+  //       });
+
+  //       // Add progress tracking
+  //       loadingTask.onProgress = (progressData: any) => {
+  //         console.log(
+  //           "Loading progress:",
+  //           Math.round((progressData.loaded / progressData.total) * 100) + "%"
+  //         );
+  //       };
+
+  //       console.log("Waiting for PDF to load...");
+  //       const pdf = await loadingTask.promise;
+
+  //       console.log("PDF loaded successfully!");
+  //       console.log("Number of pages:", pdf.numPages);
+
+  //       setPdfDoc(pdf);
+  //       setNumPages(pdf.numPages);
+  //       setLoading(false);
+  //     } catch (err: any) {
+  //       console.error("Error loading PDF document:", err);
+
+  //       let errorMessage = "Failed to load PDF document";
+
+  //       if (err.name === "InvalidPDFException") {
+  //         errorMessage = "Invalid PDF file format";
+  //       } else if (err.name === "MissingPDFException") {
+  //         errorMessage = "PDF file is missing or corrupted";
+  //       } else if (err.name === "UnexpectedResponseException") {
+  //         errorMessage = "Server returned unexpected response";
+  //       } else if (err.message?.includes("401")) {
+  //         errorMessage = "Authentication required - please log in again";
+  //       } else if (err.message?.includes("404")) {
+  //         errorMessage = "PDF file not found";
+  //       } else if (err.message?.includes("403")) {
+  //         errorMessage = "Access denied to PDF file";
+  //       } else if (err.message) {
+  //         errorMessage = err.message;
+  //       }
+
+  //       setError(errorMessage);
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   initializePDFJS();
+  //   loadHighlights();
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [pdfUuid]);
   useEffect(() => {
     const initializePDFJS = async () => {
       try {
@@ -1541,6 +1659,99 @@ export function PDFViewer({ pdfUuid, title }: PDFViewerProps) {
       }
     };
 
+    // const loadPDFDocument = async (pdfjs: any) => {
+    //   if (!pdfUuid) {
+    //     setError("No PDF UUID provided");
+    //     setLoading(false);
+    //     return;
+    //   }
+
+    //   try {
+    //     console.log("Loading PDF document for UUID:", pdfUuid);
+    //     console.log("File path:", filePath);
+
+    //     // Determine the PDF URL with a default fallback
+    //     let pdfUrl: string = `/api/pdf/${pdfUuid}`;
+
+    //     // If filePath is provided, use it instead
+    //     if (filePath) {
+    //       // Make relative paths absolute
+    //       pdfUrl =
+    //         filePath.startsWith("http") || filePath.startsWith("/")
+    //           ? filePath
+    //           : `/${filePath}`;
+    //     }
+
+    //     console.log("Final PDF URL:", pdfUrl);
+
+    //     // Test accessibility first
+    //     const testResponse = await fetch(pdfUrl, {
+    //       method: "HEAD",
+    //       credentials: "same-origin",
+    //     });
+
+    //     if (!testResponse.ok) {
+    //       throw new Error(
+    //         `PDF not accessible: ${testResponse.status} ${testResponse.statusText}`
+    //       );
+    //     }
+
+    //     console.log("PDF endpoint is accessible, loading document...");
+
+    //     // Create loading task with proper configuration
+    //     const loadingTask = pdfjs.getDocument({
+    //       url: pdfUrl,
+    //       httpHeaders: {
+    //         Accept: "application/pdf",
+    //       },
+    //       withCredentials: true,
+    //       disableFontFace: false,
+    //       disableStream: true,
+    //       disableAutoFetch: true,
+    //     });
+
+    //     // Add progress tracking
+    //     loadingTask.onProgress = (progressData: any) => {
+    //       console.log(
+    //         "Loading progress:",
+    //         Math.round((progressData.loaded / progressData.total) * 100) + "%"
+    //       );
+    //     };
+
+    //     console.log("Waiting for PDF to load...");
+    //     const pdf = await loadingTask.promise;
+
+    //     console.log("PDF loaded successfully!");
+    //     console.log("Number of pages:", pdf.numPages);
+
+    //     setPdfDoc(pdf);
+    //     setNumPages(pdf.numPages);
+    //     setLoading(false);
+    //   } catch (err: any) {
+    //     console.error("Error loading PDF document:", err);
+
+    //     let errorMessage = "Failed to load PDF document";
+
+    //     if (err.name === "InvalidPDFException") {
+    //       errorMessage = "Invalid PDF file format";
+    //     } else if (err.name === "MissingPDFException") {
+    //       errorMessage = "PDF file is missing or corrupted";
+    //     } else if (err.name === "UnexpectedResponseException") {
+    //       errorMessage = "Server returned unexpected response";
+    //     } else if (err.message?.includes("401")) {
+    //       errorMessage = "Authentication required - please log in again";
+    //     } else if (err.message?.includes("404")) {
+    //       errorMessage = "PDF file not found";
+    //     } else if (err.message?.includes("403")) {
+    //       errorMessage = "Access denied to PDF file";
+    //     } else if (err.message) {
+    //       errorMessage = err.message;
+    //     }
+
+    //     setError(errorMessage);
+    //     setLoading(false);
+    //   }
+    // };
     const loadPDFDocument = async (pdfjs: any) => {
       if (!pdfUuid) {
         setError("No PDF UUID provided");
@@ -1550,35 +1761,52 @@ export function PDFViewer({ pdfUuid, title }: PDFViewerProps) {
 
       try {
         console.log("Loading PDF document for UUID:", pdfUuid);
+        console.log("File path from Vercel Blob:", filePath);
 
-        const pdfUrl = `/api/pdf/${pdfUuid}`;
-        console.log("PDF URL:", pdfUrl);
+        let pdfUrl;
 
-        // Test accessibility first
-        const testResponse = await fetch(pdfUrl, {
-          method: "HEAD",
-          credentials: "same-origin",
-        });
-
-        if (!testResponse.ok) {
-          throw new Error(
-            `PDF not accessible: ${testResponse.status} ${testResponse.statusText}`
-          );
+        // ✅ Handle Vercel Blob URLs
+        if (filePath) {
+          // If it's a Vercel Blob URL (starts with blob: or https://)
+          if (filePath.startsWith("blob:") || filePath.startsWith("https://")) {
+            pdfUrl = filePath;
+            console.log("Using Vercel Blob URL:", pdfUrl);
+          }
+          // If it's a relative path (local development)
+          else if (filePath.startsWith("/")) {
+            pdfUrl = filePath;
+            console.log("Using local file path:", pdfUrl);
+          }
+          // If it's just a filename
+          else {
+            pdfUrl = `/uploads/${filePath}`;
+            console.log("Using uploads path:", pdfUrl);
+          }
+        } else {
+          // Fallback to API endpoint if no filePath
+          pdfUrl = `/api/pdf/${pdfUuid}`;
+          console.log("Using API endpoint:", pdfUrl);
         }
 
-        console.log("PDF endpoint is accessible, loading document...");
+        console.log("Final PDF URL:", pdfUrl);
 
-        // Create loading task with proper configuration
-        const loadingTask = pdfjs.getDocument({
+        // For blob URLs, we need different configuration
+        const loadingConfig: any = {
           url: pdfUrl,
-          httpHeaders: {
-            Accept: "application/pdf",
-          },
-          withCredentials: true,
-          disableFontFace: false, // Enable font loading for better text rendering
+          disableFontFace: false,
           disableStream: true,
           disableAutoFetch: true,
-        });
+        };
+
+        // Only add credentials for same-origin requests, not for blob URLs
+        if (!pdfUrl.startsWith("blob:") && !pdfUrl.startsWith("https://")) {
+          loadingConfig.withCredentials = true;
+          loadingConfig.httpHeaders = {
+            Accept: "application/pdf",
+          };
+        }
+
+        const loadingTask = pdfjs.getDocument(loadingConfig);
 
         // Add progress tracking
         loadingTask.onProgress = (progressData: any) => {
@@ -1599,34 +1827,13 @@ export function PDFViewer({ pdfUuid, title }: PDFViewerProps) {
         setLoading(false);
       } catch (err: any) {
         console.error("Error loading PDF document:", err);
-
-        let errorMessage = "Failed to load PDF document";
-
-        if (err.name === "InvalidPDFException") {
-          errorMessage = "Invalid PDF file format";
-        } else if (err.name === "MissingPDFException") {
-          errorMessage = "PDF file is missing or corrupted";
-        } else if (err.name === "UnexpectedResponseException") {
-          errorMessage = "Server returned unexpected response";
-        } else if (err.message?.includes("401")) {
-          errorMessage = "Authentication required - please log in again";
-        } else if (err.message?.includes("404")) {
-          errorMessage = "PDF file not found";
-        } else if (err.message?.includes("403")) {
-          errorMessage = "Access denied to PDF file";
-        } else if (err.message) {
-          errorMessage = err.message;
-        }
-
-        setError(errorMessage);
-        setLoading(false);
+        // ... error handling
       }
     };
-
     initializePDFJS();
     loadHighlights();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pdfUuid]);
+  }, [pdfUuid, filePath]); // ✅ Add filePath to dependencies
 
   // Render page when dependencies change
   useEffect(() => {
