@@ -593,7 +593,133 @@ export default function DashboardPage() {
       setTitle(selectedFile.name.replace(".pdf", ""));
     }
   };
+  // Updated handleUpload function for dashboard component
+  const handleUpload = async () => {
+    if (!file || !title.trim()) {
+      toast({
+        title: "Missing information",
+        description: "Please select a file and enter a title",
+        variant: "destructive",
+      });
+      return;
+    }
 
+    // File validation
+    if (file.size > 10 * 1024 * 1024) {
+      // 10MB limit for Vercel
+      toast({
+        title: "File too large",
+        description: "Please select a file smaller than 10MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.type !== "application/pdf") {
+      toast({
+        title: "Invalid file type",
+        description: "Please select a PDF file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      console.log("Starting file upload...", {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+      });
+
+      // Always use Base64 approach for better Vercel compatibility
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          // Remove data:application/pdf;base64, prefix
+          const base64Data = result.split(",")[1];
+          resolve(base64Data);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      console.log("File converted to base64, uploading...");
+
+      const response = await fetch("/api/pdf/upload", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          file: base64,
+          title: title.trim(),
+          fileName: file.name,
+          fileSize: file.size,
+        }),
+      });
+
+      console.log("Upload response status:", response.status);
+
+      const responseData = await response.json();
+      console.log("Upload response data:", responseData);
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "PDF uploaded successfully",
+        });
+        setShowUploadDialog(false);
+        setFile(null);
+        setTitle("");
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+        await loadPDFs();
+      } else {
+        throw new Error(
+          responseData.error || `Upload failed with status ${response.status}`
+        );
+      }
+    } catch (error: any) {
+      console.error("Upload error:", error);
+
+      let errorMessage = "Failed to upload PDF";
+
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (typeof error === "string") {
+        errorMessage = error;
+      }
+
+      // Provide more specific error messages
+      if (errorMessage.includes("413")) {
+        errorMessage = "File is too large. Please select a smaller PDF file.";
+      } else if (errorMessage.includes("400")) {
+        errorMessage =
+          "Invalid file format. Please ensure you're uploading a valid PDF file.";
+      } else if (errorMessage.includes("401")) {
+        errorMessage = "Session expired. Please log in again.";
+      } else if (
+        errorMessage.includes("network") ||
+        errorMessage.includes("fetch")
+      ) {
+        errorMessage =
+          "Network error. Please check your connection and try again.";
+      }
+
+      toast({
+        title: "Upload failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
   // const handleUpload = async () => {
   //   if (!file || !title.trim()) {
   //     toast({
@@ -642,105 +768,105 @@ export default function DashboardPage() {
   //   }
   // };
   // Replace your handleUpload function with this improved version that tries both methods
-  const handleUpload = async () => {
-    if (!file || !title.trim()) {
-      toast({
-        title: "Missing information",
-        description: "Please select a file and enter a title",
-        variant: "destructive",
-      });
-      return;
-    }
+  // const handleUpload = async () => {
+  //   if (!file || !title.trim()) {
+  //     toast({
+  //       title: "Missing information",
+  //       description: "Please select a file and enter a title",
+  //       variant: "destructive",
+  //     });
+  //     return;
+  //   }
 
-    // Additional file validation
-    if (file.size > 5 * 1024 * 1024) {
-      // 5MB limit
-      toast({
-        title: "File too large",
-        description: "Please select a file smaller than 5MB",
-        variant: "destructive",
-      });
-      return;
-    }
+  //   // Additional file validation
+  //   if (file.size > 5 * 1024 * 1024) {
+  //     // 5MB limit
+  //     toast({
+  //       title: "File too large",
+  //       description: "Please select a file smaller than 5MB",
+  //       variant: "destructive",
+  //     });
+  //     return;
+  //   }
 
-    setUploading(true);
+  //   setUploading(true);
 
-    try {
-      // Try FormData approach first
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("title", title.trim());
+  //   try {
+  //     // Try FormData approach first
+  //     const formData = new FormData();
+  //     formData.append("file", file);
+  //     formData.append("title", title.trim());
 
-      console.log("Trying FormData upload...");
+  //     console.log("Trying FormData upload...");
 
-      let response = await fetch("/api/pdf/upload", {
-        method: "POST",
-        credentials: "include",
-        body: formData,
-      });
+  //     let response = await fetch("/api/pdf/upload", {
+  //       method: "POST",
+  //       credentials: "include",
+  //       body: formData,
+  //     });
 
-      // If FormData fails, try Base64 approach
-      if (!response.ok && response.status === 400) {
-        console.log("FormData failed, trying Base64 approach...");
+  //     // If FormData fails, try Base64 approach
+  //     if (!response.ok && response.status === 400) {
+  //       console.log("FormData failed, trying Base64 approach...");
 
-        // Convert file to base64
-        const base64 = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const result = reader.result as string;
-            resolve(result.split(",")[1]); // Remove data:application/pdf;base64, prefix
-          };
-          reader.readAsDataURL(file);
-        });
+  //       // Convert file to base64
+  //       const base64 = await new Promise<string>((resolve) => {
+  //         const reader = new FileReader();
+  //         reader.onload = () => {
+  //           const result = reader.result as string;
+  //           resolve(result.split(",")[1]); // Remove data:application/pdf;base64, prefix
+  //         };
+  //         reader.readAsDataURL(file);
+  //       });
 
-        response = await fetch("/api/pdf/upload", {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            file: base64,
-            title: title.trim(),
-            fileName: file.name,
-            fileSize: file.size,
-          }),
-        });
-      }
+  //       response = await fetch("/api/pdf/upload", {
+  //         method: "POST",
+  //         credentials: "include",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //         body: JSON.stringify({
+  //           file: base64,
+  //           title: title.trim(),
+  //           fileName: file.name,
+  //           fileSize: file.size,
+  //         }),
+  //       });
+  //     }
 
-      console.log("Upload response status:", response.status);
+  //     console.log("Upload response status:", response.status);
 
-      const responseData = await response.json();
-      console.log("Upload response data:", responseData);
+  //     const responseData = await response.json();
+  //     console.log("Upload response data:", responseData);
 
-      if (response.ok) {
-        toast({
-          title: "Success",
-          description: "PDF uploaded successfully",
-        });
-        setShowUploadDialog(false);
-        setFile(null);
-        setTitle("");
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
-        await loadPDFs();
-      } else {
-        throw new Error(
-          responseData.error || `Upload failed with status ${response.status}`
-        );
-      }
-    } catch (error: any) {
-      console.error("Upload error:", error);
-      toast({
-        title: "Upload failed",
-        description: error.message || "Failed to upload PDF",
-        variant: "destructive",
-      });
-    } finally {
-      setUploading(false);
-    }
-  };
+  //     if (response.ok) {
+  //       toast({
+  //         title: "Success",
+  //         description: "PDF uploaded successfully",
+  //       });
+  //       setShowUploadDialog(false);
+  //       setFile(null);
+  //       setTitle("");
+  //       if (fileInputRef.current) {
+  //         fileInputRef.current.value = "";
+  //       }
+  //       await loadPDFs();
+  //     } else {
+  //       throw new Error(
+  //         responseData.error || `Upload failed with status ${response.status}`
+  //       );
+  //     }
+  //   } catch (error: any) {
+  //     console.error("Upload error:", error);
+  //     toast({
+  //       title: "Upload failed",
+  //       description: error.message || "Failed to upload PDF",
+  //       variant: "destructive",
+  //     });
+  //   } finally {
+  //     setUploading(false);
+  //   }
+  // };
   const handleEdit = async () => {
     if (!selectedPdf || !title.trim()) return;
 
