@@ -698,7 +698,7 @@ export default function DashboardPage() {
 
                       <Button
                         className="w-full mt-4"
-                        onClick={() => window.open(pdf.filePath, "_blank")}
+                        onClick={() => router.push(`/viewer/${pdf.uuid}`)}
                       >
                         Open Document
                       </Button>
