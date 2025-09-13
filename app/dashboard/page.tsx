@@ -57,24 +57,24 @@ export default function DashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    console.log(
-      "Dashboard useEffect - authLoading:",
-      authLoading,
-      "user:",
-      user
-    );
+    // console.log(
+    //   "Dashboard useEffect - authLoading:",
+    //   authLoading,
+    //   "user:",
+    //   user
+    // );
 
     // Only proceed if auth loading is complete
     if (authLoading) return;
 
     if (!user) {
-      console.log("No user found, redirecting to login");
+      // console.log("No user found, redirecting to login");
       router.push("/login");
       return;
     }
 
     // User is authenticated, load PDFs
-    console.log("User authenticated, loading PDFs");
+    // console.log("User authenticated, loading PDFs");
     loadPDFs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authLoading, router]);
@@ -82,7 +82,7 @@ export default function DashboardPage() {
   const loadPDFs = async () => {
     setLoading(true);
     try {
-      console.log("Loading PDFs...");
+      // console.log("Loading PDFs...");
       // const response = await fetch("/api/pdf/list", {
       //   credentials: "include",
       //   headers: {
@@ -96,14 +96,14 @@ export default function DashboardPage() {
           "Content-Type": "application/json",
         },
       });
-      console.log("PDF list response:", response.status);
+      // console.log("PDF list response:", response.status);
 
       if (response.ok) {
         const data = await response.json();
-        console.log("PDFs loaded:", data);
+        // console.log("PDFs loaded:", data);
         setPdfs(data.pdfs || []);
       } else if (response.status === 401) {
-        console.log("Unauthorized, redirecting to login");
+        // console.log("Unauthorized, redirecting to login");
         router.push("/login");
         return;
       } else {
@@ -171,11 +171,11 @@ export default function DashboardPage() {
     setUploading(true);
 
     try {
-      console.log("Starting file upload...", {
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type,
-      });
+      // console.log("Starting file upload...", {
+      //   fileName: file.name,
+      //   fileSize: file.size,
+      //   fileType: file.type,
+      // });
 
       // Always use Base64 approach for better Vercel compatibility
       const base64 = await new Promise<string>((resolve, reject) => {
@@ -190,7 +190,7 @@ export default function DashboardPage() {
         reader.readAsDataURL(file);
       });
 
-      console.log("File converted to base64, uploading...");
+      // console.log("File converted to base64, uploading...");
 
       const response = await fetch("/api/pdf/upload", {
         method: "POST",
@@ -206,10 +206,10 @@ export default function DashboardPage() {
         }),
       });
 
-      console.log("Upload response status:", response.status);
+      // console.log("Upload response status:", response.status);
 
       const responseData = await response.json();
-      console.log("Upload response data:", responseData);
+      // console.log("Upload response data:", responseData);
 
       if (response.ok) {
         toast({

@@ -1631,7 +1631,7 @@ export function PDFViewer({ pdfUuid, title, filePath }: PDFViewerProps) {
   useEffect(() => {
     const initializePDFJS = async () => {
       try {
-        console.log("Loading PDF.js library...");
+        // console.log("Loading PDF.js library...");
 
         // Dynamic import of PDF.js
         const pdfjs = await import("pdfjs-dist");
@@ -1760,8 +1760,8 @@ export function PDFViewer({ pdfUuid, title, filePath }: PDFViewerProps) {
       }
 
       try {
-        console.log("Loading PDF document for UUID:", pdfUuid);
-        console.log("File path from Vercel Blob:", filePath);
+        // console.log("Loading PDF document for UUID:", pdfUuid);
+        // console.log("File path from Vercel Blob:", filePath);
 
         let pdfUrl;
 
@@ -1770,25 +1770,25 @@ export function PDFViewer({ pdfUuid, title, filePath }: PDFViewerProps) {
           // If it's a Vercel Blob URL (starts with blob: or https://)
           if (filePath.startsWith("blob:") || filePath.startsWith("https://")) {
             pdfUrl = filePath;
-            console.log("Using Vercel Blob URL:", pdfUrl);
+            // console.log("Using Vercel Blob URL:", pdfUrl);
           }
           // If it's a relative path (local development)
           else if (filePath.startsWith("/")) {
             pdfUrl = filePath;
-            console.log("Using local file path:", pdfUrl);
+            // console.log("Using local file path:", pdfUrl);
           }
           // If it's just a filename
           else {
             pdfUrl = `/uploads/${filePath}`;
-            console.log("Using uploads path:", pdfUrl);
+            // console.log("Using uploads path:", pdfUrl);
           }
         } else {
           // Fallback to API endpoint if no filePath
           pdfUrl = `/api/pdf/${pdfUuid}`;
-          console.log("Using API endpoint:", pdfUrl);
+          // console.log("Using API endpoint:", pdfUrl);
         }
 
-        console.log("Final PDF URL:", pdfUrl);
+        // console.log("Final PDF URL:", pdfUrl);
 
         // For blob URLs, we need different configuration
         const loadingConfig: any = {
@@ -1810,17 +1810,17 @@ export function PDFViewer({ pdfUuid, title, filePath }: PDFViewerProps) {
 
         // Add progress tracking
         loadingTask.onProgress = (progressData: any) => {
-          console.log(
-            "Loading progress:",
-            Math.round((progressData.loaded / progressData.total) * 100) + "%"
-          );
+          // console.log(
+          //   "Loading progress:",
+          //   Math.round((progressData.loaded / progressData.total) * 100) + "%"
+          // );
         };
 
-        console.log("Waiting for PDF to load...");
+        // console.log("Waiting for PDF to load...");
         const pdf = await loadingTask.promise;
 
-        console.log("PDF loaded successfully!");
-        console.log("Number of pages:", pdf.numPages);
+        // console.log("PDF loaded successfully!");
+        // console.log("Number of pages:", pdf.numPages);
 
         setPdfDoc(pdf);
         setNumPages(pdf.numPages);
@@ -1845,12 +1845,12 @@ export function PDFViewer({ pdfUuid, title, filePath }: PDFViewerProps) {
 
   const renderPage = async () => {
     if (!pdfDoc || !canvasRef.current || !pdfjsLib) {
-      console.log("Cannot render: missing dependencies");
+      // console.log("Cannot render: missing dependencies");
       return;
     }
 
     try {
-      console.log("Rendering page:", pageNumber);
+      // console.log("Rendering page:", pageNumber);
 
       const page = await pdfDoc.getPage(pageNumber);
       const viewport = page.getViewport({ scale, rotation });
@@ -1875,14 +1875,14 @@ export function PDFViewer({ pdfUuid, title, filePath }: PDFViewerProps) {
         viewport: viewport,
       };
 
-      console.log(
-        "Starting page render with viewport:",
-        viewport.width,
-        "x",
-        viewport.height
-      );
+      // console.log(
+      //   "Starting page render with viewport:",
+      //   viewport.width,
+      //   "x",
+      //   viewport.height
+      // );
       await page.render(renderContext).promise;
-      console.log("Page rendered successfully");
+      // console.log("Page rendered successfully");
 
       // Get text content for text layer and highlighting
       const textContentData = await page.getTextContent();
@@ -2071,7 +2071,7 @@ export function PDFViewer({ pdfUuid, title, filePath }: PDFViewerProps) {
         .writeText(text)
         .then(() => {
           toast({ title: "Text copied to clipboard" });
-          console.log("Copied text:", text);
+          // console.log("Copied text:", text);
         })
         .catch((err) => {
           console.error("Failed to copy text: ", err);

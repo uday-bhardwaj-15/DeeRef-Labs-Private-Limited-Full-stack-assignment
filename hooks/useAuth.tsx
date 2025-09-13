@@ -38,10 +38,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (res.ok) {
         const data = await res.json();
-        console.log("Auth check successful:", data);
+        // console.log("Auth check successful:", data);
         setUser(data.user);
       } else {
-        console.log("Auth check failed:", res.status);
+        // console.log("Auth check failed:", res.status);
         setUser(null);
       }
     } catch (error) {
@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error(data.error || "Login failed");
     }
 
-    console.log("Login successful:", data);
+    // console.log("Login successful:", data);
     setUser(data.user);
   };
 
@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error(data.error || "Registration failed");
     }
 
-    console.log("Registration successful:", data);
+    // console.log("Registration successful:", data);
     setUser(data.user);
   };
 

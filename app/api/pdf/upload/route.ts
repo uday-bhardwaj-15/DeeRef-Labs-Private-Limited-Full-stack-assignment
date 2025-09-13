@@ -633,12 +633,12 @@ export async function POST(request: NextRequest) {
     let fileSize: number = 0;
 
     const contentType = request.headers.get("content-type") || "";
-    console.log("Content-Type:", contentType);
+    // console.log("Content-Type:", contentType);
 
     // Always try JSON approach first for Vercel compatibility
     try {
       const body = await request.json();
-      console.log("Parsing as JSON...");
+      // console.log("Parsing as JSON...");
 
       title = body.title;
       const base64Data = body.file;
@@ -668,7 +668,7 @@ export async function POST(request: NextRequest) {
     } catch (jsonError) {
       // Fallback to FormData parsing for local development
       try {
-        console.log("JSON parsing failed, trying FormData...");
+        // console.log("JSON parsing failed, trying FormData...");
 
         // Clone the request since we already tried to read the body
         const formData = await request.formData();
@@ -746,11 +746,11 @@ export async function POST(request: NextRequest) {
     const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
     const filename = `${uuid}-${sanitizedFileName}`;
 
-    console.log("Uploading to Vercel Blob:", {
-      filename,
-      size: buffer.length,
-      originalSize: fileSize,
-    });
+    // console.log("Uploading to Vercel Blob:", {
+    //   filename,
+    //   size: buffer.length,
+    //   originalSize: fileSize,
+    // });
 
     // Upload to Vercel Blob
     let blob: PutBlobResult;
@@ -761,7 +761,7 @@ export async function POST(request: NextRequest) {
         addRandomSuffix: false, // We already have UUID
       });
 
-      console.log("Blob upload successful:", blob.url);
+      // console.log("Blob upload successful:", blob.url);
     } catch (error) {
       console.error("Blob upload error:", error);
       return NextResponse.json(
@@ -783,11 +783,11 @@ export async function POST(request: NextRequest) {
 
       await pdf.save();
 
-      console.log("PDF saved to database:", {
-        uuid,
-        title: title.trim(),
-        fileSize: buffer.length,
-      });
+      // console.log("PDF saved to database:", {
+      //   uuid,
+      //   title: title.trim(),
+      //   fileSize: buffer.length,
+      // });
 
       return NextResponse.json({
         message: "PDF uploaded successfully",
@@ -806,7 +806,7 @@ export async function POST(request: NextRequest) {
       try {
         const { del } = await import("@vercel/blob");
         await del(blob.url);
-        console.log("Cleaned up blob after database error");
+        // console.log("Cleaned up blob after database error");
       } catch (cleanupError) {
         console.error("Cleanup error:", cleanupError);
       }
